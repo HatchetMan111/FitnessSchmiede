@@ -5,17 +5,17 @@
 # Skript, keine externe Abhängigkeit zu deren Framework).
 #
 # Einmalige Installation (auf dem Proxmox-Host als root ausführen):
-#   bash -c "$(curl -fsSL https://raw.githubusercontent.com/<DEIN-USER>/fitnessschmiede/main/install.sh)"
+#   bash -c "$(curl -fsSL https://raw.githubusercontent.com/HatchetMan111/FitnessSchmiede/main/install.sh)"
 #
 # Aktualisieren eines bestehenden Containers:
-#   UPDATE=1 bash -c "$(curl -fsSL https://raw.githubusercontent.com/<DEIN-USER>/fitnessschmiede/main/install.sh)"
+#   UPDATE=1 bash -c "$(curl -fsSL https://raw.githubusercontent.com/HatchetMan111/FitnessSchmiede/main/install.sh)"
 #
 set -euo pipefail
 
 # ---------------------------------------------------------------------------
 # Konfiguration - per Umgebungsvariable vor dem Aufruf überschreibbar
 # ---------------------------------------------------------------------------
-APP_REPO_URL="${APP_REPO_URL:-https://github.com/<DEIN-USER>/fitnessschmiede.git}"  # <<< HIER ANPASSEN
+APP_REPO_URL="${APP_REPO_URL:-https://github.com/HatchetMan111/FitnessSchmiede.git}"  # <<< HIER ANPASSEN
 DATASET_REPO_URL="${DATASET_REPO_URL:-https://github.com/hasaneyldrm/exercises-dataset.git}"
 
 CT_HOSTNAME="${CT_HOSTNAME:-fitnessschmiede}"

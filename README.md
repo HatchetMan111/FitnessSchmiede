@@ -9,7 +9,7 @@ Keine Cloud, kein Login, kein Tracking.
 Auf dem Proxmox-Host als root ausführen:
 
 ```bash
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/<DEIN-USER>/fitnessschmiede/main/install.sh)"
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/HatchetMan111/FitnessSchmiede/main/install.sh)"
 ```
 
 Das Skript legt einen unprivilegierten Debian-12-LXC-Container an, installiert
@@ -24,7 +24,7 @@ sich vor dem Aufruf per Umgebungsvariable überschreiben - siehe Kopf von
 **Update eines bestehenden Containers:**
 
 ```bash
-UPDATE=1 bash -c "$(curl -fsSL https://raw.githubusercontent.com/<DEIN-USER>/fitnessschmiede/main/install.sh)"
+UPDATE=1 bash -c "$(curl -fsSL https://raw.githubusercontent.com/HatchetMan111/FitnessSchmiede/main/install.sh)"
 ```
 
 ## Architektur
