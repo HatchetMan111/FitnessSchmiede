@@ -1,0 +1,108 @@
+/*
+  FitnessSchmiede – Design-Tokens
+
+  Leitidee: eine Schmiede, kein Fitnessstudio-Klischee. Glühendes Metall
+  (Ember) steht für die Arbeitsphase, abgeschrecktes Werkzeug (Stahl) für
+  die Pause. Der Timer-Ring wechselt zwischen beiden Farben - Hitze und
+  Abkühlung als sichtbarer Rhythmus des Trainings.
+
+  Bewusst keine Web-Fonts: Die App muss auch ohne WLAN im Trainingsraum
+  funktionieren. Zahlen (Timer, Wiederholungen, Gewichte) laufen in
+  Monospace wie eine mechanische Anzeige - passt zum Werkstatt-Thema und
+  ist auf jedem Gerät sofort verfügbar.
+*/
+
+:root {
+  /* Farbe */
+  --bg: #1a1613;
+  --bg-elevated: #241e19;
+  --bg-elevated-hover: #2c241e;
+  --border: rgba(240, 233, 222, 0.12);
+  --border-strong: rgba(240, 233, 222, 0.22);
+
+  --ember: #e8623a;
+  --ember-glow: #ff8552;
+  --ember-dim: rgba(232, 98, 58, 0.16);
+
+  --steel: #7a8b99;
+  --steel-light: #a8b8c4;
+  --steel-dim: rgba(122, 139, 153, 0.16);
+
+  --forged: #8fa876; /* für "erledigt / abgeschlossen" */
+  --forged-dim: rgba(143, 168, 118, 0.16);
+
+  --text: #f0e9de;
+  --text-dim: #b8afa0;
+  --text-faint: #7a7266;
+
+  /* Typografie */
+  --font-display: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-body: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Code", "Roboto Mono", Consolas, monospace;
+
+  /* Abstände */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 16px;
+  --space-4: 24px;
+  --space-5: 32px;
+  --space-6: 48px;
+
+  --radius: 14px;
+  --radius-sm: 8px;
+
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.mono-num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+:focus-visible {
+  outline: 2px solid var(--ember-glow);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,255 @@
+/* Layout */
+.app-shell {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: var(--space-4) var(--space-3) calc(var(--space-6) + var(--safe-bottom));
+  min-height: 100dvh;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-5);
+}
+
+.topbar .wordmark {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 18px;
+  letter-spacing: -0.01em;
+}
+
+.topbar .wordmark span {
+  color: var(--ember);
+}
+
+/* Karten */
+.card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--space-4);
+}
+
+.hero-card {
+  background: linear-gradient(155deg, var(--bg-elevated) 0%, #1f1a15 100%);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  padding: var(--space-5) var(--space-4);
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-card::before {
+  /* angedeutete Glut oben rechts - dezent, keine Spielerei */
+  content: "";
+  position: absolute;
+  top: -60px;
+  right: -60px;
+  width: 180px;
+  height: 180px;
+  background: radial-gradient(circle, var(--ember-dim) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.hero-card h2 {
+  font-size: 26px;
+  margin: var(--space-2) 0 var(--space-3);
+}
+
+.hero-meta {
+  display: flex;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.hero-meta .stat-value {
+  font-family: var(--font-mono);
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.hero-meta .stat-label {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+/* Buttons */
+.btn {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 15px;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 14px 22px;
+  cursor: pointer;
+  transition: transform 0.12s ease, background 0.12s ease;
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
+
+.btn-primary {
+  background: var(--ember);
+  color: #1a1613;
+  width: 100%;
+}
+
+.btn-primary:hover {
+  background: var(--ember-glow);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-dim);
+  border: 1px solid var(--border-strong);
+}
+
+/* Wochen-Fortschritt: gestempelte Metall-Tags, echte Sequenz -> Nummerierung ist hier inhaltlich sinnvoll */
+.week-track {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.week-tag {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border-strong);
+  color: var(--text-faint);
+}
+
+.week-tag.is-done {
+  background: var(--forged-dim);
+  color: var(--forged);
+  border-color: transparent;
+}
+
+.week-tag.is-current {
+  background: var(--ember-dim);
+  color: var(--ember-glow);
+  border-color: transparent;
+}
+
+/* Leerer Zustand */
+.empty-state {
+  text-align: center;
+  padding: var(--space-6) var(--space-3);
+  color: var(--text-dim);
+}
+
+/* Trainings-Einheit: Timer-Ring als Signatur-Element */
+.session-view {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.session-progress {
+  color: var(--text-faint);
+  margin-bottom: var(--space-2);
+}
+
+.exercise-name {
+  font-size: 22px;
+  margin-bottom: var(--space-4);
+  max-width: 320px;
+}
+
+.timer-ring-wrap {
+  position: relative;
+  width: 260px;
+  height: 260px;
+  margin: var(--space-2) 0 var(--space-5);
+}
+
+.timer-ring-wrap svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.timer-ring-track {
+  fill: none;
+  stroke: var(--border);
+  stroke-width: 10;
+}
+
+.timer-ring-progress {
+  fill: none;
+  stroke: var(--ember);
+  stroke-width: 10;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.9s linear, stroke 0.4s ease;
+}
+
+.timer-ring-progress.is-rest {
+  stroke: var(--steel);
+}
+
+.timer-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.timer-seconds {
+  font-size: 56px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.timer-phase {
+  margin-top: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ember-glow);
+}
+
+.timer-phase.is-rest {
+  color: var(--steel-light);
+}
+
+.session-controls {
+  display: flex;
+  gap: var(--space-3);
+  width: 100%;
+  max-width: 320px;
+}
+
+.session-controls .btn {
+  flex: 1;
+}
+
+.up-next {
+  margin-top: var(--space-6);
+  width: 100%;
+  border-top: 1px solid var(--border);
+  padding-top: var(--space-3);
+  text-align: left;
+}
+
+.up-next .eyebrow {
+  margin-bottom: var(--space-2);
+  display: block;
+}
+
+.up-next-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--text-dim);
+  font-size: 14px;
+  padding: var(--space-2) 0;
+}

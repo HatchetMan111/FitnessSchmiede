@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>FitnessSchmiede</title>
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />
+  <meta name="theme-color" content="#1a1613" />
+  <link rel="stylesheet" href="/css/tokens.css" />
+  <link rel="stylesheet" href="/css/app.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <img src="/icons/icon.svg" width="28" height="28" alt="" />
+      <div class="wordmark">Fitness<span>Schmiede</span></div>
+    </header>
+
+    <main id="view-root">
+      <!-- Dashboard- oder Session-Ansicht wird hier von app.js eingesetzt -->
+    </main>
+  </div>
+
+  <script type="module" src="/js/app.js"></script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js"));
+    }
+  </script>
+</body>
+</html>

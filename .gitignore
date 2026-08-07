@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Daten (lokal, wird beim Import erzeugt / enthält Trainingsdaten)
+backend/data/*.db
+backend/data/exercises-dataset/
+backend/data/exercises_full.json
+
+# Node (falls später ergänzt)
+node_modules/
+
+# Editor/OS
+.DS_Store
+.vscode/
