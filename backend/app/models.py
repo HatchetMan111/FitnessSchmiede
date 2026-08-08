@@ -66,7 +66,9 @@ class Program(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     sessions: Mapped[list["ProgramSession"]] = relationship(
-        back_populates="program", cascade="all, delete-orphan"
+        back_populates="program",
+        cascade="all, delete-orphan",
+        order_by="ProgramSession.week_number, ProgramSession.day_number",
     )
 
 

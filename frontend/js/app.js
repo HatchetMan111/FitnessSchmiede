@@ -7,18 +7,22 @@ import { renderNutrition } from "./nutrition.js";
 import { maybeShowWizard } from "./wizard.js";
 
 const root = document.getElementById("view-root");
+let currentCleanup = null;
 
 function navigate(path) {
   window.location.hash = path;
 }
 
 async function router() {
+  currentCleanup?.();
+  currentCleanup = null;
+
   const hash = window.location.hash.replace(/^#\/?/, "");
   const [route, a, b] = hash.split("/");
 
   try {
     if (route === "session" && a) {
-      await renderSession(root, a, navigate);
+      currentCleanup = (await renderSession(root, a, navigate)) || null;
     } else if (route === "week" && a && b) {
       await renderWeek(root, navigate, a, b);
     } else if (route === "nutrition") {

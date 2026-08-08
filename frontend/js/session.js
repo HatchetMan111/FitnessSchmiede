@@ -104,6 +104,15 @@ export async function renderSession(root, sessionId, navigate) {
     }
   }
 
+  function teardown() {
+    stopTimer();
+    document.removeEventListener("visibilitychange", onVisibilityChange);
+    if (wakeLock) {
+      wakeLock.release().catch(() => {});
+      wakeLock = null;
+    }
+  }
+
   async function advance() {
     const finished = currentStep();
     stopTimer();
@@ -115,14 +124,13 @@ export async function renderSession(root, sessionId, navigate) {
     stepIndex += 1;
     if (stepIndex >= queue.length) {
       await api.completeSession(session.id);
-      await wakeLock?.release();
-      document.removeEventListener("visibilitychange", onVisibilityChange);
+      teardown();
       renderComplete();
       return;
     }
 
     const next = currentStep();
-    if (next.type === "work") cueGo();
+    if (next.type === "work" || next.type === "reps") cueGo();
     else if (next.type === "rest") cueRest();
 
     render();
@@ -266,4 +274,6 @@ export async function renderSession(root, sessionId, navigate) {
 
   render();
   if (["work", "rest", "prep"].includes(currentStep().type)) startTimer();
+
+  return teardown;
 }

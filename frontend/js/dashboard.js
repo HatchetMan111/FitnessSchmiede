@@ -63,7 +63,7 @@ export async function renderDashboard(root, navigate) {
   const exerciseCount = next.exercises.length;
   const estMinutes = Math.round(
     next.exercises.reduce(
-      (sum, e) => sum + e.sets * ((e.duration_seconds || 40) + e.rest_seconds),
+      (sum, e) => sum + e.sets * ((e.duration_seconds ? e.duration_seconds + 5 : 40) + e.rest_seconds),
       0
     ) / 60
   );
