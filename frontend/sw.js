@@ -10,6 +10,8 @@ const SHELL_ASSETS = [
   "/js/session.js",
   "/js/onboarding.js",
   "/js/settings.js",
+  "/js/week.js",
+  "/js/wizard.js",
   "/icons/icon.svg",
   "/manifest.webmanifest",
 ];

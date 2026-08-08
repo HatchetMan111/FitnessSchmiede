@@ -68,7 +68,8 @@ export async function renderDashboard(root, navigate) {
       <div class="week-track">${weekTrack(sessions, next.week_number)}</div>
     </div>
     <div class="dashboard-links">
-      <a href="#/new">Neues Programm planen</a>
+      <a href="#/week/${active.id}/${next.week_number}">Diese Woche ansehen</a>
+      <a href="#/new">Neues Programm</a>
       <a href="#/settings">Einstellungen</a>
     </div>
   `;

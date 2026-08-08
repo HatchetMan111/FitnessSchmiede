@@ -2,6 +2,8 @@ import { renderDashboard } from "./dashboard.js";
 import { renderSession } from "./session.js";
 import { renderOnboarding } from "./onboarding.js";
 import { renderSettings } from "./settings.js";
+import { renderWeek } from "./week.js";
+import { maybeShowWizard } from "./wizard.js";
 
 const root = document.getElementById("view-root");
 
@@ -11,11 +13,13 @@ function navigate(path) {
 
 async function router() {
   const hash = window.location.hash.replace(/^#\/?/, "");
-  const [route, id] = hash.split("/");
+  const [route, a, b] = hash.split("/");
 
   try {
-    if (route === "session" && id) {
-      await renderSession(root, id, navigate);
+    if (route === "session" && a) {
+      await renderSession(root, a, navigate);
+    } else if (route === "week" && a && b) {
+      await renderWeek(root, navigate, a, b);
     } else if (route === "new") {
       renderOnboarding(root, navigate, {
         heading: "Neues Programm",
@@ -35,5 +39,8 @@ async function router() {
   }
 }
 
+document.getElementById("help-btn")?.addEventListener("click", () => maybeShowWizard(true));
+
 window.addEventListener("hashchange", router);
 router();
+maybeShowWizard();

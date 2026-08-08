@@ -2,25 +2,28 @@ import { api } from "./api.js";
 
 const RING_RADIUS = 110;
 const CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
+const PREP_SECONDS = 5;
+
+function mediaUrl(path) {
+  return `/media/${path}`;
+}
 
 /**
  * Baut aus den Übungen einer Einheit eine flache Abfolge von Schritten:
- * - "work"  : zeitbasierter Arbeitsblock (Bodyweight/HIIT) -> automatischer Countdown
- * - "reps"  : satzbasierter Block (Geräte/Gewichte) -> manuelle Bestätigung
- * - "rest"  : Pause zwischen Sätzen/Übungen -> automatischer Countdown
+ * - "prep"  : 5s Vorbereitung vor jedem zeitbasierten Intervall, zeigt die
+ *             kommende Übung, damit man sich in Position bringen kann
+ * - "work"  : zeitbasierter Arbeitsblock (Bodyweight/HIIT) -> Countdown
+ * - "reps"  : satzbasierter Block (Geräte/Gewichte) -> manuelle Bestätigung,
+ *             kein Timerdruck, Bild bleibt trotzdem sichtbar
+ * - "rest"  : Pause zwischen Sätzen/Übungen -> Countdown
  */
 function buildQueue(session) {
   const queue = [];
   session.exercises.forEach((se, exerciseIndex) => {
     for (let set = 1; set <= se.sets; set++) {
       if (se.duration_seconds) {
-        queue.push({
-          type: "work",
-          seconds: se.duration_seconds,
-          exerciseIndex,
-          set,
-          se,
-        });
+        queue.push({ type: "prep", seconds: PREP_SECONDS, exerciseIndex, set, se });
+        queue.push({ type: "work", seconds: se.duration_seconds, exerciseIndex, set, se });
       } else {
         queue.push({ type: "reps", reps: se.reps, exerciseIndex, set, se });
       }
@@ -32,6 +35,16 @@ function buildQueue(session) {
     }
   });
   return queue;
+}
+
+function exerciseMediaHtml(exercise, size = "large") {
+  const gif = mediaUrl(exercise.gif_path);
+  const fallback = mediaUrl(exercise.image_path);
+  return `
+    <div class="exercise-media exercise-media--${size}">
+      <img src="${gif}" alt="${exercise.name}"
+        onerror="if(this.src.indexOf('${exercise.gif_path}')!==-1){this.src='${fallback}';}else{this.style.display='none';this.parentElement.classList.add('exercise-media--missing');}" />
+    </div>`;
 }
 
 export async function renderSession(root, sessionId, navigate) {
@@ -48,10 +61,6 @@ export async function renderSession(root, sessionId, navigate) {
     return queue[stepIndex];
   }
 
-  function exerciseName() {
-    return currentStep().se.exercise.name;
-  }
-
   function stopTimer() {
     if (intervalId) clearInterval(intervalId);
     intervalId = null;
@@ -66,7 +75,7 @@ export async function renderSession(root, sessionId, navigate) {
       return;
     }
     render();
-    if (currentStep().type !== "reps") startTimer();
+    if (["work", "rest", "prep"].includes(currentStep().type)) startTimer();
   }
 
   function startTimer() {
@@ -91,12 +100,12 @@ export async function renderSession(root, sessionId, navigate) {
     const offset = CIRCUMFERENCE * fraction;
     const ringEl = root.querySelector(".timer-ring-progress");
     const secondsEl = root.querySelector(".timer-seconds");
-    const phaseEl = root.querySelector(".timer-phase");
+    const prepEl = root.querySelector("#prep-num");
+    if (prepEl) prepEl.textContent = String(Math.max(remaining, 0));
     if (!ringEl) return;
     ringEl.style.strokeDashoffset = String(offset);
     ringEl.classList.toggle("is-rest", step.type === "rest");
-    phaseEl.classList.toggle("is-rest", step.type === "rest");
-    secondsEl.textContent = String(Math.max(remaining, 0));
+    if (secondsEl) secondsEl.textContent = String(Math.max(remaining, 0));
   }
 
   function render() {
@@ -104,21 +113,29 @@ export async function renderSession(root, sessionId, navigate) {
     const exNum = step.exerciseIndex + 1;
     const total = session.exercises.length;
     const nextEx = session.exercises[step.exerciseIndex + 1];
+    const exercise = step.se.exercise;
+
+    if (step.type === "prep") {
+      root.innerHTML = `
+        <div class="session-view">
+          <p class="session-progress eyebrow">Gleich geht's los · Übung ${exNum} von ${total}</p>
+          <h2 class="exercise-name">${exercise.name}</h2>
+          <div class="prep-wrap">
+            ${exerciseMediaHtml(exercise, "large")}
+            <div class="prep-countdown mono-num" id="prep-num">${step.seconds}</div>
+          </div>
+          <p class="timer-phase">Bereit machen …</p>
+        </div>`;
+      return;
+    }
 
     if (step.type === "reps") {
       root.innerHTML = `
         <div class="session-view">
           <p class="session-progress eyebrow">Übung ${exNum} von ${total} · Satz ${step.set}/${step.se.sets}</p>
-          <h2 class="exercise-name">${exerciseName()}</h2>
-          <div class="timer-ring-wrap">
-            <svg viewBox="0 0 260 260">
-              <circle class="timer-ring-track" cx="130" cy="130" r="${RING_RADIUS}" />
-            </svg>
-            <div class="timer-center">
-              <div class="timer-seconds mono-num">${step.reps}×</div>
-              <div class="timer-phase">Wiederholungen</div>
-            </div>
-          </div>
+          <h2 class="exercise-name">${exercise.name}</h2>
+          ${exerciseMediaHtml(exercise, "large")}
+          <div class="reps-badge mono-num">${step.reps}×</div>
           <div class="session-controls">
             <button class="btn btn-primary" id="done-btn">Satz erledigt</button>
           </div>
@@ -128,19 +145,22 @@ export async function renderSession(root, sessionId, navigate) {
       return;
     }
 
+    // work oder rest
+    const isRest = step.type === "rest";
     root.innerHTML = `
       <div class="session-view">
         <p class="session-progress eyebrow">Übung ${exNum} von ${total} · Satz ${step.set || ""}</p>
-        <h2 class="exercise-name">${step.type === "rest" ? "Pause" : exerciseName()}</h2>
-        <div class="timer-ring-wrap">
+        <h2 class="exercise-name">${isRest ? "Pause" : exercise.name}</h2>
+        ${isRest ? "" : exerciseMediaHtml(exercise, "small")}
+        <div class="timer-ring-wrap ${isRest ? "" : "timer-ring-wrap--with-media"}">
           <svg viewBox="0 0 260 260">
             <circle class="timer-ring-track" cx="130" cy="130" r="${RING_RADIUS}" />
-            <circle class="timer-ring-progress" cx="130" cy="130" r="${RING_RADIUS}"
+            <circle class="timer-ring-progress ${isRest ? "is-rest" : ""}" cx="130" cy="130" r="${RING_RADIUS}"
               stroke-dasharray="${CIRCUMFERENCE}" stroke-dashoffset="0" />
           </svg>
           <div class="timer-center">
             <div class="timer-seconds mono-num">${step.seconds}</div>
-            <div class="timer-phase">${step.type === "rest" ? "Pause" : "Arbeit"}</div>
+            <div class="timer-phase ${isRest ? "is-rest" : ""}">${isRest ? "Pause" : "Arbeit"}</div>
           </div>
         </div>
         <div class="session-controls">
@@ -163,7 +183,8 @@ export async function renderSession(root, sessionId, navigate) {
       <div class="up-next">
         <span class="eyebrow">Als Nächstes</span>
         <div class="up-next-item">
-          <span>${nextEx.exercise.name}</span>
+          <img class="up-next-thumb" src="${mediaUrl(nextEx.exercise.image_path)}" alt="" />
+          <span class="up-next-name">${nextEx.exercise.name}</span>
           <span class="mono-num">${nextEx.duration_seconds ? nextEx.duration_seconds + "s" : nextEx.reps + "×"}</span>
         </div>
       </div>`;
@@ -181,5 +202,5 @@ export async function renderSession(root, sessionId, navigate) {
   }
 
   render();
-  if (currentStep().type !== "reps") startTimer();
+  if (["work", "rest", "prep"].includes(currentStep().type)) startTimer();
 }
