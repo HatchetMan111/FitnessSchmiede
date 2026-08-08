@@ -8,6 +8,8 @@ const SHELL_ASSETS = [
   "/js/api.js",
   "/js/dashboard.js",
   "/js/session.js",
+  "/js/onboarding.js",
+  "/js/settings.js",
   "/icons/icon.svg",
   "/manifest.webmanifest",
 ];

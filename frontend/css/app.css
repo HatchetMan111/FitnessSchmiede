@@ -253,3 +253,177 @@
   font-size: 14px;
   padding: var(--space-2) 0;
 }
+
+/* Formulare */
+.form-field {
+  margin-bottom: var(--space-3);
+  text-align: left;
+}
+
+.form-field label {
+  display: block;
+  font-size: 13px;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+}
+
+.form-row {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.form-row .form-field {
+  flex: 1;
+}
+
+.input {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 15px;
+}
+
+.input:focus {
+  border-color: var(--ember);
+}
+
+select.input {
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, var(--text-dim) 50%),
+    linear-gradient(135deg, var(--text-dim) 50%, transparent 50%);
+  background-position: calc(100% - 18px) center, calc(100% - 13px) center;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 14px;
+  color: var(--text-dim);
+  margin-bottom: var(--space-4);
+}
+
+/* Segmented Control für Fokus-Auswahl */
+.segmented {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.segmented-option {
+  flex: 1;
+  background: var(--bg);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  padding: 10px 8px;
+  color: var(--text-dim);
+  cursor: pointer;
+  text-align: center;
+  transition: border-color 0.12s ease, color 0.12s ease;
+}
+
+.segmented-option span {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.segmented-option small {
+  display: block;
+  font-size: 11px;
+  margin-top: 2px;
+}
+
+.segmented-option.is-active {
+  border-color: var(--ember);
+  background: var(--ember-dim);
+}
+
+.segmented-option.is-active span {
+  color: var(--ember-glow);
+}
+
+/* Links unter dem Dashboard */
+.dashboard-links {
+  display: flex;
+  justify-content: space-between;
+  margin-top: var(--space-3);
+  padding: 0 var(--space-2);
+}
+
+.dashboard-links a,
+.back-link {
+  color: var(--text-dim);
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.dashboard-links a:hover,
+.back-link:hover {
+  color: var(--ember-glow);
+}
+
+.back-link {
+  display: inline-block;
+}
+
+/* Anbieter-Liste (Einstellungen) */
+.provider-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.provider-row:last-child {
+  border-bottom: none;
+}
+
+.provider-meta {
+  font-size: 12px;
+  color: var(--text-faint);
+  margin-top: 2px;
+}
+
+.provider-row-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.badge {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 20px;
+  background: var(--forged-dim);
+  color: var(--forged);
+}
+
+.btn-icon {
+  background: transparent;
+  border: 1px solid var(--border-strong);
+  color: var(--text-dim);
+  border-radius: 6px;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+}
+
+.btn-icon:hover {
+  border-color: var(--ember);
+  color: var(--ember-glow);
+}
+
+.text-dim {
+  color: var(--text-dim);
+  font-size: 14px;
+}

@@ -1,4 +1,5 @@
 import { api } from "./api.js";
+import { renderOnboarding } from "./onboarding.js";
 
 function findNextSession(sessions) {
   return sessions.find((s) => !s.completed) || null;
@@ -23,12 +24,10 @@ export async function renderDashboard(root, navigate) {
   const active = programs.find((p) => p.status === "active");
 
   if (!active) {
-    root.innerHTML = `
-      <div class="card empty-state">
-        <p class="eyebrow">Kein aktives Programm</p>
-        <p>Lege über die API einen Trainingsplan an, dann erscheint deine
-        nächste Einheit hier.</p>
-      </div>`;
+    renderOnboarding(root, navigate, {
+      heading: "Kein aktives Programm",
+      intro: "Leg direkt hier deinen ersten Trainingsplan an.",
+    });
     return;
   }
 
@@ -36,11 +35,10 @@ export async function renderDashboard(root, navigate) {
   const next = findNextSession(sessions);
 
   if (!next) {
-    root.innerHTML = `
-      <div class="card empty-state">
-        <p class="eyebrow">${active.name}</p>
-        <p>Programm abgeschlossen – stark! Zeit für ein neues.</p>
-      </div>`;
+    renderOnboarding(root, navigate, {
+      heading: `"${active.name}" abgeschlossen`,
+      intro: "Stark! Zeit für das nächste Programm.",
+    });
     return;
   }
 
@@ -68,6 +66,10 @@ export async function renderDashboard(root, navigate) {
       </div>
       <button class="btn btn-primary" id="start-btn">Einheit starten</button>
       <div class="week-track">${weekTrack(sessions, next.week_number)}</div>
+    </div>
+    <div class="dashboard-links">
+      <a href="#/new">Neues Programm planen</a>
+      <a href="#/settings">Einstellungen</a>
     </div>
   `;
 

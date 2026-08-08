@@ -1,12 +1,18 @@
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from sqlalchemy.orm import Session
 
+from app.ai.factory import PROVIDER_PRESETS
 from app.ai.translate import count_untranslated, translate_all_exercises
 from app.database import SessionLocal, get_db
 from app.models import AIProvider
 from app.schemas import AIProviderCreate, AIProviderOut
 
 router = APIRouter(prefix="/api/settings", tags=["settings"])
+
+
+@router.get("/ai-provider-presets")
+def get_provider_presets():
+    return PROVIDER_PRESETS
 
 
 @router.get("/ai-providers", response_model=list[AIProviderOut])

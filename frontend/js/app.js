@@ -1,5 +1,7 @@
 import { renderDashboard } from "./dashboard.js";
 import { renderSession } from "./session.js";
+import { renderOnboarding } from "./onboarding.js";
+import { renderSettings } from "./settings.js";
 
 const root = document.getElementById("view-root");
 
@@ -14,6 +16,13 @@ async function router() {
   try {
     if (route === "session" && id) {
       await renderSession(root, id, navigate);
+    } else if (route === "new") {
+      renderOnboarding(root, navigate, {
+        heading: "Neues Programm",
+        intro: "Läuft parallel zum bestehenden - das aktuelle wird dabei archiviert.",
+      });
+    } else if (route === "settings") {
+      await renderSettings(root, navigate);
     } else {
       await renderDashboard(root, navigate);
     }

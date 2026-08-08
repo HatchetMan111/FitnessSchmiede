@@ -13,6 +13,11 @@ router = APIRouter(prefix="/api/programs", tags=["programs"])
 def create_program(payload: ProgramCreate, db: Session = Depends(get_db)):
     if payload.focus not in ("bodyweight", "equipment", "mixed"):
         raise HTTPException(400, "focus muss 'bodyweight', 'equipment' oder 'mixed' sein")
+
+    # Bisherige aktive Programme archivieren, damit das Dashboard immer
+    # eindeutig das neue Programm als aktuelles findet.
+    db.query(Program).filter(Program.status == "active").update({Program.status: "archived"})
+
     program = generate_program(
         db,
         name=payload.name,
