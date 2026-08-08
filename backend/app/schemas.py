@@ -93,3 +93,30 @@ class AIProviderOut(BaseModel):
     is_default: bool
     # api_key bewusst nicht in der Ausgabe, damit er nicht durchs Frontend
     # geloggt / in der Browser-Konsole sichtbar wird.
+
+
+class ProfileIn(BaseModel):
+    weight_kg: float
+    height_cm: float
+    age: int
+    sex: str  # "male" | "female"
+    activity_level: str = "moderate"
+
+
+class ProfileOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    weight_kg: float
+    height_cm: float
+    age: int
+    sex: str
+    activity_level: str
+
+
+class NutritionTargetsOut(BaseModel):
+    goal_category: str
+    tdee: int
+    calories: int
+    protein_g: int
+    fat_g: int
+    carbs_g: int

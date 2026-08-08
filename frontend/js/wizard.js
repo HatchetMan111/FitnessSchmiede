@@ -17,6 +17,10 @@ const SLIDES = [
     title: "KI optional, alles andere lokal",
     text: "Unter „Einstellungen“ kannst du Ollama, ChatGPT, Claude oder OpenRouter hinterlegen - z.B. für die deutsche Übersetzung der Übungsanleitungen. Ohne Anbieter funktioniert das Training trotzdem komplett offline.",
   },
+  {
+    title: "Training & Ernährung zusammen",
+    text: "Unter „Ernährung“ hinterlegst du einmalig Gewicht, Größe und Aktivitätslevel. Daraus errechnet die App Kalorien- und Makro-Richtwerte, die automatisch zum Ziel deines aktuellen Programms passen - kein Tracking, nur eine seriöse Orientierung.",
+  },
 ];
 
 export function maybeShowWizard(force = false) {

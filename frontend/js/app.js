@@ -3,6 +3,7 @@ import { renderSession } from "./session.js";
 import { renderOnboarding } from "./onboarding.js";
 import { renderSettings } from "./settings.js";
 import { renderWeek } from "./week.js";
+import { renderNutrition } from "./nutrition.js";
 import { maybeShowWizard } from "./wizard.js";
 
 const root = document.getElementById("view-root");
@@ -20,6 +21,8 @@ async function router() {
       await renderSession(root, a, navigate);
     } else if (route === "week" && a && b) {
       await renderWeek(root, navigate, a, b);
+    } else if (route === "nutrition") {
+      await renderNutrition(root, navigate);
     } else if (route === "new") {
       renderOnboarding(root, navigate, {
         heading: "Neues Programm",

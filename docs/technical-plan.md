@@ -80,6 +80,23 @@ ins Deutsche (`ai/translate.py`). Adaptives Coaching (KI kommentiert/passt
 den regelbasierten Plan an) ist als Erweiterung vorgesehen, aber noch nicht
 implementiert.
 
+## 5a. Ernährung (Richtwerte, kein Tracking)
+
+`backend/app/nutrition.py` – bewusst kein Ernährungstagebuch, sondern eine
+seriöse Ausgangsgröße, die Training und Ernährung sichtbar zusammenbringt:
+
+- Einmaliges Profil (Gewicht, Größe, Alter, Geschlecht, Aktivitätslevel) in
+  `user_profile` (Singleton, `id=1`).
+- Grundumsatz über die Mifflin-St-Jeor-Formel, Gesamtumsatz über einen
+  Aktivitätsfaktor.
+- Kalorien-/Protein-Anpassung anhand des **Ziels des aktuell aktiven
+  Programms** (`Kraftaufbau`/`Muskelaufbau` → Überschuss + hohes Protein,
+  `Abnehmen` → Defizit + weiterhin hohes Protein, `Ausdauer & Fitness` →
+  Erhaltung). Wechselt das Trainingsziel, ändern sich die Richtwerte beim
+  nächsten Aufruf automatisch mit.
+- Im Dashboard als kompakter Streifen unter der nächsten Einheit sichtbar,
+  volle Aufschlüsselung unter `#/nutrition`.
+
 ## 6. Frontend
 
 Bewusst **kein Framework, kein Build-Schritt** – reines HTML/CSS/JS, vom

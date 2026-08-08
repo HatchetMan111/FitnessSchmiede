@@ -131,3 +131,18 @@ class AIProvider(Base):
     api_key: Mapped[str | None] = mapped_column(String, nullable=True)  # z.B. leer bei Ollama
     default_model: Mapped[str] = mapped_column(String)
     is_default: Mapped[bool] = mapped_column(Boolean, default=False)
+
+
+class UserProfile(Base):
+    """Singleton (id=1) - eine Person pro Installation. Dient ausschließlich
+    der Berechnung von Kalorien-/Makro-Richtwerten, kein Tracking-Verlauf."""
+
+    __tablename__ = "user_profile"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, default=1)
+    weight_kg: Mapped[float] = mapped_column(Float)
+    height_cm: Mapped[float] = mapped_column(Float)
+    age: Mapped[int] = mapped_column(Integer)
+    sex: Mapped[str] = mapped_column(String)  # "male" | "female" (für BMR-Formel)
+    activity_level: Mapped[str] = mapped_column(String, default="moderate")
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)

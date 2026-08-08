@@ -31,4 +31,9 @@ export const api = {
   getTranslationStatus: () => request("/settings/translation-status"),
   triggerTranslation: () =>
     request("/settings/translate-exercises", { method: "POST" }),
+
+  getProfile: () => request("/profile"),
+  saveProfile: (payload) => request("/profile", { method: "POST", body: JSON.stringify(payload) }),
+  getActivityLevels: () => request("/nutrition/activity-levels"),
+  getNutritionTargets: () => request("/nutrition/targets"),
 };

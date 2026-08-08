@@ -17,6 +17,24 @@ function weekTrack(sessions, currentWeek) {
     .join("");
 }
 
+async function nutritionStripHtml() {
+  try {
+    const targets = await api.getNutritionTargets();
+    return `
+      <a href="#/nutrition" class="nutrition-strip">
+        <span class="nutrition-strip-item"><strong>${targets.calories}</strong> kcal</span>
+        <span class="nutrition-strip-item"><strong>${targets.protein_g}g</strong> Protein</span>
+        <span class="nutrition-strip-item"><strong>${targets.carbs_g}g</strong> Kohlenhydrate</span>
+        <span class="nutrition-strip-item"><strong>${targets.fat_g}g</strong> Fett</span>
+      </a>`;
+  } catch {
+    return `
+      <a href="#/nutrition" class="nutrition-strip nutrition-strip--empty">
+        Ernährungs-Richtwerte passend zu deinem Ziel einrichten →
+      </a>`;
+  }
+}
+
 export async function renderDashboard(root, navigate) {
   root.innerHTML = `<div class="empty-state">Lade dein Programm …</div>`;
 
@@ -67,6 +85,9 @@ export async function renderDashboard(root, navigate) {
       <button class="btn btn-primary" id="start-btn">Einheit starten</button>
       <div class="week-track">${weekTrack(sessions, next.week_number)}</div>
     </div>
+
+    ${await nutritionStripHtml()}
+
     <div class="dashboard-links">
       <a href="#/week/${active.id}/${next.week_number}">Diese Woche ansehen</a>
       <a href="#/new">Neues Programm</a>
