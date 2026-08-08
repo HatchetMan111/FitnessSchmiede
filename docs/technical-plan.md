@@ -116,6 +116,16 @@ Trainingsrhythmus.
 Trainings-Einheit mit Countdown-Timer/Satz-Zähler und automatischem
 Session-Abschluss.
 
+**Bekannte, akzeptierte Einschränkung:** Service Worker (Offline-Cache) und
+die Wake-Lock-API (Bildschirm bleibt während des Trainings an) benötigen
+einen Secure Context (HTTPS oder `localhost`). Die App läuft bewusst über
+einfaches HTTP im LAN, ohne Reverse Proxy/Zertifikat - Einfachheit hat hier
+Vorrang. Beide Features sind im Code vorhanden und fallen ohne Fehler still
+zurück, aktivieren sich auf dem Standard-Setup aber nicht. Falls das später
+doch gebraucht wird: lokales HTTPS z.B. über Caddy mit selbstsigniertem
+Zertifikat oder mkcert wäre der nächste Schritt, bewusst nicht Teil des
+aktuellen Installers.
+
 **Noch nicht gebaut** (nächste Ausbauschritte):
 - Einstellungsseite (KI-Anbieter anlegen, Übersetzung anstoßen) – aktuell nur per API nutzbar
 - Programm-Erstellung als UI (aktuell nur per API) – z.B. kurzer Onboarding-Dialog

@@ -31,8 +31,13 @@ UPDATE=1 bash -c "$(curl -fsSL https://raw.githubusercontent.com/HatchetMan111/F
 
 - **Backend:** Python + FastAPI, SQLite (eine Datei, kein separater DB-Prozess)
 - **Frontend:** PWA aus reinem HTML/CSS/JS, kein Build-Schritt nötig - lässt
-  sich auf dem Smartphone-Homescreen installieren und läuft dank Service
-  Worker auch ohne WLAN weiter, sobald eine Einheit einmal geladen wurde
+  sich auf dem Smartphone-Homescreen installieren. **Bekannte Einschränkung:**
+  Service Worker (Offline-Cache) und Wake Lock (Bildschirm bleibt an) laufen
+  nur in einem "Secure Context" (HTTPS oder `localhost`). Da die App bewusst
+  über einfaches HTTP im LAN läuft, greifen beide Features aktuell nicht -
+  der Code ist vorhanden und schadet nicht, aktiviert sich aber nicht.
+  Bewusste Entscheidung, um die Installation einfach zu halten (siehe
+  `docs/technical-plan.md`, Abschnitt 6).
 - **Übungsdaten:** [hasaneyldrm/exercises-dataset](https://github.com/hasaneyldrm/exercises-dataset)
   (1.324 Übungen, MIT-lizenzierte Metadaten; Bilder/GIFs © Gym visual, siehe
   Lizenzhinweis im Dataset-Repo)
