@@ -1,4 +1,5 @@
 import { api } from "./api.js";
+import { cueTick, cueGo, cueRest } from "./cues.js";
 
 const RING_RADIUS = 110;
 const CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
@@ -8,15 +9,6 @@ function mediaUrl(path) {
   return `/media/${path}`;
 }
 
-/**
- * Baut aus den Übungen einer Einheit eine flache Abfolge von Schritten:
- * - "prep"  : 5s Vorbereitung vor jedem zeitbasierten Intervall, zeigt die
- *             kommende Übung, damit man sich in Position bringen kann
- * - "work"  : zeitbasierter Arbeitsblock (Bodyweight/HIIT) -> Countdown
- * - "reps"  : satzbasierter Block (Geräte/Gewichte) -> manuelle Bestätigung,
- *             kein Timerdruck, Bild bleibt trotzdem sichtbar
- * - "rest"  : Pause zwischen Sätzen/Übungen -> Countdown
- */
 function buildQueue(session) {
   const queue = [];
   session.exercises.forEach((se, exerciseIndex) => {
@@ -47,6 +39,25 @@ function exerciseMediaHtml(exercise, size = "large") {
     </div>`;
 }
 
+function instructionsHtml(exercise) {
+  const text = exercise.instructions_de || exercise.instructions_en;
+  if (!text) return "";
+  return `
+    <details class="instructions">
+      <summary>Anleitung</summary>
+      <p>${text}</p>
+    </details>`;
+}
+
+// Wake Lock: verhindert, dass der Bildschirm während des Trainings einschläft.
+async function acquireWakeLock() {
+  try {
+    return (await navigator.wakeLock?.request("screen")) || null;
+  } catch {
+    return null; // z.B. nicht unterstützt oder Tab im Hintergrund - kein Blocker
+  }
+}
+
 export async function renderSession(root, sessionId, navigate) {
   root.innerHTML = `<div class="empty-state">Lade Einheit …</div>`;
   const session = await api.getSession(sessionId);
@@ -56,6 +67,17 @@ export async function renderSession(root, sessionId, navigate) {
   let remaining = 0;
   let intervalId = null;
   let paused = false;
+  let endTime = 0;
+  let pausedRemainingMs = null;
+  let wakeLock = await acquireWakeLock();
+
+  document.addEventListener("visibilitychange", onVisibilityChange);
+
+  async function onVisibilityChange() {
+    if (document.visibilityState === "visible" && !wakeLock) {
+      wakeLock = await acquireWakeLock();
+    }
+  }
 
   function currentStep() {
     return queue[stepIndex];
@@ -66,32 +88,66 @@ export async function renderSession(root, sessionId, navigate) {
     intervalId = null;
   }
 
+  async function logCompletedExercise(step) {
+    // Genau einmal pro Übung loggen, wenn ihr letzter Satz fertig ist -
+    // aktuell "wie geplant erledigt", ohne abweichende Ist-Werte zu erfassen.
+    if (step.set !== step.se.sets) return;
+    try {
+      await api.logWorkout({
+        session_exercise_id: step.se.id,
+        actual_sets: step.se.sets,
+        actual_reps: step.se.reps,
+        actual_duration_seconds: step.se.duration_seconds,
+      });
+    } catch (err) {
+      console.error("Logging fehlgeschlagen", err);
+    }
+  }
+
   async function advance() {
+    const finished = currentStep();
     stopTimer();
+
+    if (finished.type === "work" || finished.type === "reps") {
+      logCompletedExercise(finished);
+    }
+
     stepIndex += 1;
     if (stepIndex >= queue.length) {
       await api.completeSession(session.id);
+      await wakeLock?.release();
+      document.removeEventListener("visibilitychange", onVisibilityChange);
       renderComplete();
       return;
     }
+
+    const next = currentStep();
+    if (next.type === "work") cueGo();
+    else if (next.type === "rest") cueRest();
+
     render();
-    if (["work", "rest", "prep"].includes(currentStep().type)) startTimer();
+    if (["work", "rest", "prep"].includes(next.type)) startTimer();
   }
 
   function startTimer() {
     const step = currentStep();
-    remaining = step.seconds;
+    endTime = Date.now() + step.seconds * 1000;
     paused = false;
+    tick();
+    intervalId = setInterval(tick, 250);
+  }
+
+  // Zeitstempel- statt Zähler-basiert: bleibt auch dann korrekt, wenn der
+  // Browser das Intervall im Hintergrund/gesperrten Bildschirm ausbremst.
+  function tick() {
+    if (paused) return;
+    const step = currentStep();
+    remaining = Math.max(0, Math.ceil((endTime - Date.now()) / 1000));
     updateRing();
-    intervalId = setInterval(() => {
-      if (paused) return;
-      remaining -= 1;
-      if (remaining <= 0) {
-        advance();
-      } else {
-        updateRing();
-      }
-    }, 1000);
+
+    if (step.type === "prep" && remaining > 0 && remaining <= 3) cueTick();
+
+    if (remaining <= 0) advance();
   }
 
   function updateRing() {
@@ -104,7 +160,6 @@ export async function renderSession(root, sessionId, navigate) {
     if (prepEl) prepEl.textContent = String(Math.max(remaining, 0));
     if (!ringEl) return;
     ringEl.style.strokeDashoffset = String(offset);
-    ringEl.classList.toggle("is-rest", step.type === "rest");
     if (secondsEl) secondsEl.textContent = String(Math.max(remaining, 0));
   }
 
@@ -125,6 +180,7 @@ export async function renderSession(root, sessionId, navigate) {
             <div class="prep-countdown mono-num" id="prep-num">${step.seconds}</div>
           </div>
           <p class="timer-phase">Bereit machen …</p>
+          ${instructionsHtml(exercise)}
         </div>`;
       return;
     }
@@ -139,13 +195,13 @@ export async function renderSession(root, sessionId, navigate) {
           <div class="session-controls">
             <button class="btn btn-primary" id="done-btn">Satz erledigt</button>
           </div>
+          ${instructionsHtml(exercise)}
           ${upNextHtml(nextEx)}
         </div>`;
       root.querySelector("#done-btn").addEventListener("click", advance);
       return;
     }
 
-    // work oder rest
     const isRest = step.type === "rest";
     root.innerHTML = `
       <div class="session-view">
@@ -167,13 +223,20 @@ export async function renderSession(root, sessionId, navigate) {
           <button class="btn btn-ghost" id="pause-btn">Pause</button>
           <button class="btn btn-ghost" id="skip-btn">Überspringen</button>
         </div>
+        ${isRest ? "" : instructionsHtml(exercise)}
         ${upNextHtml(nextEx)}
       </div>`;
 
     root.querySelector("#skip-btn").addEventListener("click", advance);
     root.querySelector("#pause-btn").addEventListener("click", (e) => {
       paused = !paused;
-      e.target.textContent = paused ? "Weiter" : "Pause";
+      if (paused) {
+        pausedRemainingMs = endTime - Date.now();
+        e.target.textContent = "Weiter";
+      } else {
+        endTime = Date.now() + pausedRemainingMs;
+        e.target.textContent = "Pause";
+      }
     });
   }
 

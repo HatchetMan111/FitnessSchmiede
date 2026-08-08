@@ -712,3 +712,33 @@ select.input {
   color: var(--text-dim);
   margin-top: 4px;
 }
+
+/* Aufklappbare Übungsanleitung */
+.instructions {
+  width: 100%;
+  text-align: left;
+  margin-top: var(--space-3);
+  border-top: 1px solid var(--border);
+  padding-top: var(--space-3);
+}
+
+.instructions summary {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+
+.instructions[open] summary {
+  color: var(--ember-glow);
+  margin-bottom: var(--space-2);
+}
+
+.instructions p {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-dim);
+  margin: 0;
+}

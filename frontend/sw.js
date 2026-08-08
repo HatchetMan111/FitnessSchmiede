@@ -13,6 +13,7 @@ const SHELL_ASSETS = [
   "/js/week.js",
   "/js/wizard.js",
   "/js/nutrition.js",
+  "/js/cues.js",
   "/icons/icon.svg",
   "/manifest.webmanifest",
 ];

@@ -46,6 +46,21 @@ EXERCISES_PER_SESSION = 6
 DELOAD_EVERY_N_WEEKS = 4
 
 
+def _day_offsets(days_per_week: int) -> list[int]:
+    """Verteilt die Trainingstage gleichmäßig über eine 7-Tage-Woche statt
+    sie direkt hintereinander zu legen (z.B. Mo/Mi/Sa statt Mo/Di/Mi bei 3
+    Tagen) - wichtig für Erholung zwischen Krafteinheiten."""
+    if days_per_week >= 7:
+        return list(range(7))
+    offsets: list[int] = []
+    for i in range(days_per_week):
+        offset = round(i * 7 / days_per_week)
+        while offset in offsets:
+            offset += 1
+        offsets.append(min(offset, 6))
+    return offsets
+
+
 def _equipment_filter(focus: str, style: str):
     """Body-weight-only für time-Einheiten; bei reps-Einheiten Geräte/Gewichte."""
     if focus == "bodyweight" or style == "time":
@@ -91,6 +106,7 @@ def generate_program(
 
     start_date = start_date or datetime.utcnow()
     templates = SESSION_TEMPLATES[focus]
+    day_offsets = _day_offsets(days_per_week)
 
     program = Program(
         name=name,
@@ -116,7 +132,7 @@ def generate_program(
                 week_number=week,
                 day_number=day,
                 session_type=session_type,
-                planned_date=start_date + timedelta(weeks=week - 1, days=day - 1),
+                planned_date=start_date + timedelta(weeks=week - 1, days=day_offsets[day - 1]),
             )
             db.add(session)
             db.flush()
