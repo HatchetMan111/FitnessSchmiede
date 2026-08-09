@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
 from app.database import init_db
-from app.routers import exercises, nutrition, programs, sessions, settings
+from app.routers import exercises, history, nutrition, programs, sessions, settings
 
 app = FastAPI(title="FitnessSchmiede", version="0.1.0")
 
@@ -14,6 +14,7 @@ app.include_router(programs.router)
 app.include_router(sessions.router)
 app.include_router(settings.router)
 app.include_router(nutrition.router)
+app.include_router(history.router)
 
 
 @app.on_event("startup")

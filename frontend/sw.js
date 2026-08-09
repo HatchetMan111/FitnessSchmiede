@@ -14,6 +14,7 @@ const SHELL_ASSETS = [
   "/js/wizard.js",
   "/js/nutrition.js",
   "/js/cues.js",
+  "/js/history.js",
   "/icons/icon.svg",
   "/manifest.webmanifest",
 ];

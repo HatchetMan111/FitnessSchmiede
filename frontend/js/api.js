@@ -36,4 +36,6 @@ export const api = {
   saveProfile: (payload) => request("/profile", { method: "POST", body: JSON.stringify(payload) }),
   getActivityLevels: () => request("/nutrition/activity-levels"),
   getNutritionTargets: () => request("/nutrition/targets"),
+
+  getHistory: () => request("/history"),
 };

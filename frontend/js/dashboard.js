@@ -89,7 +89,8 @@ export async function renderDashboard(root, navigate) {
     ${await nutritionStripHtml()}
 
     <div class="dashboard-links">
-      <a href="#/week/${active.id}/${next.week_number}">Diese Woche ansehen</a>
+      <a href="#/week/${active.id}/${next.week_number}">Diese Woche</a>
+      <a href="#/history">Fortschritt</a>
       <a href="#/new">Neues Programm</a>
       <a href="#/settings">Einstellungen</a>
     </div>
