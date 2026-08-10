@@ -13,6 +13,7 @@ Kernideen:
   (sets x reps) -> Frontend zeigt einen Satz-Zähler mit Pausen-Timer.
 - Jede 4. Woche ist eine Deload-Woche (reduziertes Volumen zur Erholung).
 """
+import json
 import random
 from datetime import datetime, timedelta
 
@@ -42,8 +43,85 @@ SESSION_TEMPLATES = {
     ],
 }
 
-EXERCISES_PER_SESSION = 6
+# Kuratierte Geräte-Gruppen, gemappt auf die tatsächlichen Equipment-Werte
+# im Datensatz. Deckt 1317 der 1324 Übungen ab - die restlichen 7 hängen an
+# Einzelgeräten (Skierg, Stepmill etc.) mit je nur 1 Übung und lohnen keine
+# eigene Auswahl. "body weight" ist immer inklusive, keine eigene Auswahlgruppe.
+EQUIPMENT_GROUPS = {
+    "dumbbell": {"label": "Kurzhanteln", "values": ["dumbbell"], "count": 294},
+    "barbell": {
+        "label": "Langhantel",
+        "values": ["barbell", "ez barbell", "olympic barbell", "trap bar"],
+        "count": 180,
+    },
+    "cable": {"label": "Kabelzug", "values": ["cable"], "count": 157},
+    "machine": {
+        "label": "Kraftstation / Maschinen",
+        "values": ["leverage machine", "smith machine", "sled machine", "assisted"],
+        "count": 159,
+    },
+    "band": {"label": "Widerstandsband", "values": ["band", "resistance band"], "count": 61},
+    "kettlebell": {"label": "Kettlebell", "values": ["kettlebell"], "count": 41},
+    "weighted": {"label": "Zusatzgewicht (Weste/Gürtel)", "values": ["weighted"], "count": 36},
+    "stability_ball": {
+        "label": "Gymnastik-/Bosu-Ball",
+        "values": ["stability ball", "bosu ball"],
+        "count": 31,
+    },
+    "medicine_ball": {"label": "Medizinball", "values": ["medicine ball"], "count": 13},
+    "rope": {"label": "Springseil / Battle Rope", "values": ["rope"], "count": 10},
+    "roller": {"label": "Faszien-/Ab-Roller", "values": ["roller", "wheel roller"], "count": 10},
+}
+
+# Startwerte und Obergrenzen pro Fitness-Level - Anfänger starten spürbar
+# leichter (kürzere Arbeitszeit, mehr Pause, weniger Übungen) und die Spanne
+# bis zur Obergrenze ist enger, damit die Steigerung sanfter verläuft.
+LEVEL_CONFIG = {
+    "beginner": {
+        "label": "Einsteiger",
+        "exercises_per_session": 4,
+        "time_work": (15, 28),
+        "time_rest": (35, 28),
+        "time_sets": 2,
+        "reps": (6, 8),
+        "reps_sets": (2, 3),
+        "reps_rest": 100,
+        "progression_pace": 0.6,  # erreicht die Obergrenze langsamer
+    },
+    "intermediate": {
+        "label": "Fortgeschritten",
+        "exercises_per_session": 6,
+        "time_work": (30, 50),
+        "time_rest": (25, 20),
+        "time_sets": 3,
+        "reps": (8, 12),
+        "reps_sets": (3, 4),
+        "reps_rest": 90,
+        "progression_pace": 1.0,
+    },
+    "advanced": {
+        "label": "Erfahren",
+        "exercises_per_session": 7,
+        "time_work": (40, 65),
+        "time_rest": (20, 12),
+        "time_sets": 3,
+        "reps": (10, 15),
+        "reps_sets": (4, 5),
+        "reps_rest": 75,
+        "progression_pace": 1.2,  # nutzt die Spanne schneller aus
+    },
+}
+
 DELOAD_EVERY_N_WEEKS = 4
+
+
+def _resolve_equipment_values(equipment_groups: list[str]) -> list[str]:
+    values: list[str] = []
+    for key in equipment_groups:
+        group = EQUIPMENT_GROUPS.get(key)
+        if group:
+            values.extend(group["values"])
+    return values
 
 
 def _day_offsets(days_per_week: int) -> list[int]:
@@ -61,10 +139,14 @@ def _day_offsets(days_per_week: int) -> list[int]:
     return offsets
 
 
-def _equipment_filter(focus: str, style: str):
-    """Body-weight-only für time-Einheiten; bei reps-Einheiten Geräte/Gewichte."""
+def _equipment_filter(focus: str, style: str, allowed_equipment: list[str]):
+    """Body-weight-only für time-Einheiten; bei reps-Einheiten nur die vom
+    Nutzer ausgewählten Geräte. Ohne Auswahl: Fallback auf "alles außer
+    Körpergewicht", statt eine leere Übungsauswahl zu riskieren."""
     if focus == "bodyweight" or style == "time":
         return Exercise.equipment == "body weight"
+    if allowed_equipment:
+        return Exercise.equipment.in_(allowed_equipment)
     return Exercise.equipment != "body weight"
 
 
@@ -76,20 +158,26 @@ def _progression(week_number: int) -> tuple[float, bool]:
     return factor, is_deload
 
 
-def _pick_exercises(db: Session, categories: list[str], focus: str, style: str, exclude_ids: set[str]):
-    query = db.query(Exercise).filter(
-        Exercise.category.in_(categories), _equipment_filter(focus, style)
-    )
+def _pick_exercises(
+    db: Session,
+    categories: list[str],
+    focus: str,
+    style: str,
+    exclude_ids: set[str],
+    allowed_equipment: list[str],
+    exercises_per_session: int,
+):
+    equip_filter = _equipment_filter(focus, style, allowed_equipment)
+    query = db.query(Exercise).filter(Exercise.category.in_(categories), equip_filter)
     if exclude_ids:
         query = query.filter(~Exercise.id.in_(exclude_ids))
     pool = query.all()
-    if len(pool) < EXERCISES_PER_SESSION:
-        # Falls der Pool zu klein ist (z.B. wenige Bodyweight-Cardio-Übungen),
-        # Ausschluss aufweichen statt eine leere Einheit zu erzeugen.
-        pool = db.query(Exercise).filter(
-            Exercise.category.in_(categories), _equipment_filter(focus, style)
-        ).all()
-    return random.sample(pool, k=min(EXERCISES_PER_SESSION, len(pool)))
+    if len(pool) < exercises_per_session:
+        # Falls der Pool zu klein ist (z.B. wenige Bodyweight-Cardio-Übungen
+        # oder eine sehr enge Geräte-Auswahl), Ausschluss aufweichen statt
+        # eine leere Einheit zu erzeugen.
+        pool = db.query(Exercise).filter(Exercise.category.in_(categories), equip_filter).all()
+    return random.sample(pool, k=min(exercises_per_session, len(pool)))
 
 
 def generate_program(
@@ -99,10 +187,18 @@ def generate_program(
     focus: str,
     duration_weeks: int,
     days_per_week: int,
+    equipment: list[str] | None = None,
+    fitness_level: str = "intermediate",
     start_date: datetime | None = None,
 ) -> Program:
     if focus not in SESSION_TEMPLATES:
         raise ValueError("focus muss 'bodyweight', 'equipment' oder 'mixed' sein")
+    if fitness_level not in LEVEL_CONFIG:
+        raise ValueError("fitness_level muss 'beginner', 'intermediate' oder 'advanced' sein")
+
+    equipment = equipment or []
+    allowed_equipment = _resolve_equipment_values(equipment)
+    exercises_per_session = LEVEL_CONFIG[fitness_level]["exercises_per_session"]
 
     start_date = start_date or datetime.utcnow()
     templates = SESSION_TEMPLATES[focus]
@@ -112,6 +208,8 @@ def generate_program(
         name=name,
         goal=goal,
         focus=focus,
+        equipment=json.dumps(equipment, ensure_ascii=False),
+        fitness_level=fitness_level,
         duration_weeks=duration_weeks,
         days_per_week=days_per_week,
         start_date=start_date,
@@ -137,12 +235,14 @@ def generate_program(
             db.add(session)
             db.flush()
 
-            exercises = _pick_exercises(db, categories, focus, style, recently_used)
+            exercises = _pick_exercises(
+                db, categories, focus, style, recently_used, allowed_equipment, exercises_per_session
+            )
             recently_used.update(e.id for e in exercises)
 
             for idx, exercise in enumerate(exercises):
                 sets, reps, duration_seconds, rest_seconds = _dose(
-                    style, progress_factor, is_deload
+                    style, progress_factor, is_deload, fitness_level
                 )
                 db.add(
                     SessionExercise(
@@ -161,18 +261,24 @@ def generate_program(
     return program
 
 
-def _dose(style: str, progress_factor: float, is_deload: bool):
+def _dose(style: str, progress_factor: float, is_deload: bool, fitness_level: str):
     """Berechnet Sätze/Wiederholungen bzw. Arbeits-/Pausenzeiten für die
-    gegebene Trainingswoche. Deload-Wochen reduzieren das Volumen um ~30%."""
+    gegebene Trainingswoche, skaliert auf den Start-/Zielbereich des
+    Fitness-Levels. Deload-Wochen reduzieren das Volumen zusätzlich um ~30%."""
+    cfg = LEVEL_CONFIG[fitness_level]
+    factor = min(progress_factor * cfg["progression_pace"], 1.0)
     deload_mult = 0.7 if is_deload else 1.0
 
     if style == "time":
-        work_seconds = round((30 + 20 * progress_factor) * deload_mult)  # 30s -> 50s
-        rest_seconds = round(25 - 5 * progress_factor)  # 25s -> 20s zwischen Übungen
-        return 3, None, work_seconds, rest_seconds
+        w0, w1 = cfg["time_work"]
+        r0, r1 = cfg["time_rest"]
+        work_seconds = round((w0 + (w1 - w0) * factor) * deload_mult)
+        rest_seconds = round(r0 + (r1 - r0) * factor)
+        return cfg["time_sets"], None, work_seconds, rest_seconds
 
     # style == "reps"
-    reps = round((8 + 4 * progress_factor) * deload_mult)  # 8 -> 12 Wiederholungen
-    sets = 3 if is_deload else 4
-    rest_seconds = 90
-    return sets, reps, None, rest_seconds
+    reps0, reps1 = cfg["reps"]
+    sets0, sets1 = cfg["reps_sets"]
+    reps = round((reps0 + (reps1 - reps0) * factor) * deload_mult)
+    sets = sets0 if is_deload else sets1
+    return sets, reps, None, cfg["reps_rest"]

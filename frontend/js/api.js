@@ -16,6 +16,8 @@ export const api = {
   getPrograms: () => request("/programs"),
   createProgram: (payload) =>
     request("/programs", { method: "POST", body: JSON.stringify(payload) }),
+  getEquipmentGroups: () => request("/programs/meta/equipment-groups"),
+  getFitnessLevels: () => request("/programs/meta/fitness-levels"),
   getProgramSessions: (programId) => request(`/programs/${programId}/sessions`),
   getSession: (sessionId) => request(`/sessions/${sessionId}`),
   completeSession: (sessionId) =>

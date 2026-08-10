@@ -3,14 +3,25 @@ import { api } from "./api.js";
 const GOALS = ["Kraftaufbau", "Ausdauer & Fitness", "Abnehmen", "Muskelaufbau"];
 const FOCUS_OPTIONS = [
   { value: "bodyweight", label: "Bodyweight", hint: "Kein Equipment nötig" },
-  { value: "equipment", label: "Geräte", hint: "Hantel, Kabelzug etc." },
+  { value: "equipment", label: "Geräte", hint: "Aus deiner Auswahl" },
   { value: "mixed", label: "Gemischt", hint: "Beides im Wechsel" },
 ];
+const LEVEL_HINTS = {
+  beginner: "Kurze Einheiten, viel Pause - baut sich langsam auf",
+  intermediate: "Der übliche Standard-Umfang",
+  advanced: "Mehr Übungen, kürzere Pausen, höheres Volumen",
+};
 
-export function renderOnboarding(root, navigate, opts = {}) {
+export async function renderOnboarding(root, navigate, opts = {}) {
   const heading = opts.heading || "Neues Programm";
   const intro =
     opts.intro || "Kurz einrichten, dann übernimmt der Generator die Planung.";
+
+  root.innerHTML = `<div class="empty-state">Lade Optionen …</div>`;
+  const [equipmentGroups, fitnessLevels] = await Promise.all([
+    api.getEquipmentGroups(),
+    api.getFitnessLevels(),
+  ]);
 
   root.innerHTML = `
     <div class="card">
@@ -31,6 +42,21 @@ export function renderOnboarding(root, navigate, opts = {}) {
         </div>
 
         <div class="form-field">
+          <label>Fitness-Stand</label>
+          <div class="segmented" id="f-level">
+            ${Object.entries(fitnessLevels)
+              .map(
+                ([key, label], i) => `
+              <button type="button" class="segmented-option ${key === "beginner" ? "is-active" : ""}" data-value="${key}">
+                <span>${label}</span>
+              </button>`
+              )
+              .join("")}
+          </div>
+          <p class="field-hint" id="level-hint">${LEVEL_HINTS.beginner}</p>
+        </div>
+
+        <div class="form-field">
           <label>Fokus</label>
           <div class="segmented" id="f-focus">
             ${FOCUS_OPTIONS.map(
@@ -40,6 +66,20 @@ export function renderOnboarding(root, navigate, opts = {}) {
                 <small>${o.hint}</small>
               </button>`
             ).join("")}
+          </div>
+        </div>
+
+        <div class="form-field" id="equipment-field">
+          <label>Verfügbare Geräte <span class="text-faint">(Körpergewicht ist immer dabei)</span></label>
+          <div class="pill-grid">
+            ${Object.entries(equipmentGroups)
+              .map(
+                ([key, g]) => `
+              <button type="button" class="pill" data-equip="${key}">
+                ${g.label} <span class="pill-count mono-num">${g.count}</span>
+              </button>`
+              )
+              .join("")}
           </div>
         </div>
 
@@ -67,11 +107,37 @@ export function renderOnboarding(root, navigate, opts = {}) {
   `;
 
   let focus = "mixed";
-  root.querySelectorAll(".segmented-option").forEach((btn) => {
+  let level = "beginner";
+  const selectedEquipment = new Set();
+
+  root.querySelectorAll("#f-focus .segmented-option").forEach((btn) => {
     btn.addEventListener("click", () => {
       focus = btn.dataset.value;
-      root.querySelectorAll(".segmented-option").forEach((b) => b.classList.remove("is-active"));
+      root.querySelectorAll("#f-focus .segmented-option").forEach((b) => b.classList.remove("is-active"));
       btn.classList.add("is-active");
+      root.querySelector("#equipment-field").style.display = focus === "bodyweight" ? "none" : "block";
+    });
+  });
+
+  root.querySelectorAll("#f-level .segmented-option").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      level = btn.dataset.value;
+      root.querySelectorAll("#f-level .segmented-option").forEach((b) => b.classList.remove("is-active"));
+      btn.classList.add("is-active");
+      root.querySelector("#level-hint").textContent = LEVEL_HINTS[level] || "";
+    });
+  });
+
+  root.querySelectorAll(".pill").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const key = btn.dataset.equip;
+      if (selectedEquipment.has(key)) {
+        selectedEquipment.delete(key);
+        btn.classList.remove("is-active");
+      } else {
+        selectedEquipment.add(key);
+        btn.classList.add("is-active");
+      }
     });
   });
 
@@ -86,6 +152,8 @@ export function renderOnboarding(root, navigate, opts = {}) {
         name: root.querySelector("#f-name").value,
         goal: root.querySelector("#f-goal").value,
         focus,
+        fitness_level: level,
+        equipment: [...selectedEquipment],
         duration_weeks: Number(root.querySelector("#f-weeks").value),
         days_per_week: Number(root.querySelector("#f-days").value),
       });

@@ -3,16 +3,28 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models import Program
-from app.plan_generator import generate_program
+from app.plan_generator import EQUIPMENT_GROUPS, LEVEL_CONFIG, generate_program
 from app.schemas import ProgramCreate, ProgramOut, ProgramSessionOut
 
 router = APIRouter(prefix="/api/programs", tags=["programs"])
+
+
+@router.get("/meta/equipment-groups")
+def equipment_groups():
+    return {key: {"label": g["label"], "count": g["count"]} for key, g in EQUIPMENT_GROUPS.items()}
+
+
+@router.get("/meta/fitness-levels")
+def fitness_levels():
+    return {key: cfg["label"] for key, cfg in LEVEL_CONFIG.items()}
 
 
 @router.post("", response_model=ProgramOut)
 def create_program(payload: ProgramCreate, db: Session = Depends(get_db)):
     if payload.focus not in ("bodyweight", "equipment", "mixed"):
         raise HTTPException(400, "focus muss 'bodyweight', 'equipment' oder 'mixed' sein")
+    if payload.fitness_level not in LEVEL_CONFIG:
+        raise HTTPException(400, "fitness_level muss 'beginner', 'intermediate' oder 'advanced' sein")
 
     # Bisherige aktive Programme archivieren, damit das Dashboard immer
     # eindeutig das neue Programm als aktuelles findet.
@@ -23,6 +35,8 @@ def create_program(payload: ProgramCreate, db: Session = Depends(get_db)):
         name=payload.name,
         goal=payload.goal,
         focus=payload.focus,
+        equipment=payload.equipment,
+        fitness_level=payload.fitness_level,
         duration_weeks=payload.duration_weeks,
         days_per_week=payload.days_per_week,
     )

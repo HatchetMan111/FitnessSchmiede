@@ -1,5 +1,6 @@
 import { api } from "./api.js";
 import { cueTick, cueGo, cueRest } from "./cues.js";
+import { randomQuote } from "./quotes.js";
 
 const RING_RADIUS = 110;
 const CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
@@ -227,6 +228,7 @@ export async function renderSession(root, sessionId, navigate) {
             <div class="timer-phase ${isRest ? "is-rest" : ""}">${isRest ? "Pause" : "Arbeit"}</div>
           </div>
         </div>
+        ${isRest ? `<p class="quote">„${randomQuote()}"</p>` : ""}
         <div class="session-controls">
           <button class="btn btn-ghost" id="pause-btn">Pause</button>
           <button class="btn btn-ghost" id="skip-btn">Überspringen</button>
@@ -266,7 +268,7 @@ export async function renderSession(root, sessionId, navigate) {
       <div class="card empty-state">
         <p class="eyebrow">Geschafft</p>
         <h2>Einheit abgeschlossen</h2>
-        <p>Gut geschmiedet. Auf zur nächsten Einheit.</p>
+        <p class="quote" style="margin-top:8px">„${randomQuote()}"</p>
         <button class="btn btn-primary" id="back-btn" style="margin-top:16px">Zum Dashboard</button>
       </div>`;
     root.querySelector("#back-btn").addEventListener("click", () => navigate(""));
