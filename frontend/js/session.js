@@ -62,6 +62,18 @@ async function acquireWakeLock() {
 export async function renderSession(root, sessionId, navigate) {
   root.innerHTML = `<div class="empty-state">Lade Einheit …</div>`;
   const session = await api.getSession(sessionId);
+
+  if (!session.exercises.length) {
+    root.innerHTML = `
+      <div class="card empty-state">
+        <p class="eyebrow">Keine Übungen gefunden</p>
+        <p>Diese Einheit ist leer - vermutlich eine sehr enge Geräte-Auswahl bei einem älteren Programm. Neues Programm anlegen behebt das.</p>
+        <button class="btn btn-primary" id="back-btn" style="margin-top:16px">Zum Dashboard</button>
+      </div>`;
+    root.querySelector("#back-btn").addEventListener("click", () => navigate(""));
+    return;
+  }
+
   const queue = buildQueue(session);
 
   let stepIndex = 0;

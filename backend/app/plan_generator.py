@@ -177,6 +177,11 @@ def _pick_exercises(
         # oder eine sehr enge Geräte-Auswahl), Ausschluss aufweichen statt
         # eine leere Einheit zu erzeugen.
         pool = db.query(Exercise).filter(Exercise.category.in_(categories), equip_filter).all()
+    if not pool:
+        # Selbst ohne Ausschluss nichts gefunden (z.B. "nur Medizinball" trifft
+        # keine Bein-Übung) - Geräte-Filter für diese eine Einheit komplett
+        # aufweichen, damit garantiert nie eine leere Session entsteht.
+        pool = db.query(Exercise).filter(Exercise.category.in_(categories)).all()
     return random.sample(pool, k=min(exercises_per_session, len(pool)))
 
 
