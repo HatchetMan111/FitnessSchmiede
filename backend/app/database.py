@@ -35,9 +35,38 @@ def get_db():
         db.close()
 
 
+def _ensure_columns():
+    """Kleine Mini-Migration ohne Alembic-Abhängigkeit.
+
+    Base.metadata.create_all() legt nur fehlende TABELLEN an, ergänzt aber
+    keine neuen SPALTEN an bereits existierenden Tabellen. Da diese App über
+    UPDATE=1 aktualisiert wird (bestehende DB-Datei bleibt erhalten), müssen
+    neu hinzugekommene Spalten hier händisch nachgezogen werden - sonst
+    crasht die erste Abfrage nach einem Update mit "no such column".
+
+    Neue Spalte an einem bestehenden Modell? Hier einen Eintrag ergänzen.
+    """
+    from sqlalchemy import inspect, text
+
+    inspector = inspect(engine)
+    if "programs" not in inspector.get_table_names():
+        return  # Frische Installation - create_all() legt die Tabelle bereits vollständig an
+
+    existing = {c["name"] for c in inspector.get_columns("programs")}
+    migrations = {
+        "equipment": "ALTER TABLE programs ADD COLUMN equipment TEXT DEFAULT '[]'",
+        "fitness_level": "ALTER TABLE programs ADD COLUMN fitness_level TEXT DEFAULT 'intermediate'",
+    }
+    with engine.begin() as conn:
+        for column, statement in migrations.items():
+            if column not in existing:
+                conn.execute(text(statement))
+
+
 def init_db():
     # Modelle importieren, damit sie bei Base registriert sind, bevor
     # die Tabellen erstellt werden.
     from app import models  # noqa: F401
 
     Base.metadata.create_all(bind=engine)
+    _ensure_columns()
