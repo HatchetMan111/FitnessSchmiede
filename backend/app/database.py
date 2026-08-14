@@ -8,7 +8,7 @@ separaten Datenbank-Prozess. Der Pfad kann per Umgebungsvariable DB_PATH
 import os
 from pathlib import Path
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
 DB_PATH = os.environ.get(
@@ -18,8 +18,23 @@ Path(DB_PATH).parent.mkdir(parents=True, exist_ok=True)
 
 engine = create_engine(
     f"sqlite:///{DB_PATH}",
-    connect_args={"check_same_thread": False},
+    connect_args={"check_same_thread": False, "timeout": 30},
 )
+
+
+@event.listens_for(engine, "connect")
+def _set_sqlite_pragma(dbapi_connection, connection_record):
+    """WAL-Modus erlaubt gleichzeitiges Lesen während ein Schreibvorgang
+    läuft, busy_timeout lässt konkurrierende Schreibvorgänge kurz warten
+    statt sofort mit "database is locked" zu scheitern. Relevant, weil der
+    Übersetzungs-Job im Hintergrund minutenlang schreibt, während parallel
+    z.B. eine Einheit geloggt werden kann."""
+    cursor = dbapi_connection.cursor()
+    cursor.execute("PRAGMA journal_mode=WAL")
+    cursor.execute("PRAGMA busy_timeout=30000")
+    cursor.close()
+
+
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
