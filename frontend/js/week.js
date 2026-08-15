@@ -4,6 +4,14 @@ function mediaUrl(path) {
   return `/media/${path}`;
 }
 
+function estMinutes(session) {
+  const total = session.exercises.reduce(
+    (sum, e) => sum + e.sets * ((e.duration_seconds ? e.duration_seconds + 5 : 40) + e.rest_seconds),
+    0
+  );
+  return Math.round(total / 60);
+}
+
 export async function renderWeek(root, navigate, programId, weekNumber) {
   root.innerHTML = `<div class="empty-state">Lade Woche …</div>`;
 
@@ -16,11 +24,14 @@ export async function renderWeek(root, navigate, programId, weekNumber) {
     return;
   }
 
+  const doneCount = weekSessions.filter((s) => s.completed).length;
+
   root.innerHTML = `
     <a href="#/" class="back-link">← Zurück zum Dashboard</a>
     <div class="card" style="margin-top:12px">
-      <p class="eyebrow">Woche ${String(week).padStart(2, "0")}</p>
-      <h2 style="margin:8px 0 20px">Was diese Woche ansteht</h2>
+      <p class="eyebrow">Woche ${String(week).padStart(2, "0")} · ${doneCount}/${weekSessions.length} erledigt</p>
+      <h2 style="margin:8px 0 4px">Was diese Woche ansteht</h2>
+      <p class="text-dim" style="margin:0 0 20px">Reihenfolge ist nur ein Vorschlag - auch mehrere Einheiten an einem Tag sind kein Problem.</p>
       <div class="week-days">
         ${weekSessions
           .map(
@@ -28,8 +39,8 @@ export async function renderWeek(root, navigate, programId, weekNumber) {
           <div class="week-day ${s.completed ? "is-done" : ""}">
             <div class="week-day-header">
               <div>
-                <div class="week-day-title">Tag ${s.day_number} · ${s.session_type}</div>
-                <div class="week-day-meta mono-num">${s.exercises.length} Übungen</div>
+                <div class="week-day-title">Einheit ${s.day_number} · ${s.session_type}</div>
+                <div class="week-day-meta mono-num">${s.exercises.length} Übungen · ~${estMinutes(s)} min</div>
               </div>
               ${s.completed ? '<span class="badge">Erledigt</span>' : `<button class="btn-icon-text" data-start="${s.id}">Start</button>`}
             </div>

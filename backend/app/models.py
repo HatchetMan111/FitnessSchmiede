@@ -61,6 +61,7 @@ class Program(Base):
     focus: Mapped[str] = mapped_column(String)  # "bodyweight" | "equipment" | "mixed"
     equipment: Mapped[str] = mapped_column(Text, default="[]")  # JSON-Liste ausgewählter Geräte-Gruppen
     fitness_level: Mapped[str] = mapped_column(String, default="intermediate")
+    session_minutes: Mapped[int] = mapped_column(Integer, default=20)
     duration_weeks: Mapped[int] = mapped_column(Integer)
     days_per_week: Mapped[int] = mapped_column(Integer)
     start_date: Mapped[datetime] = mapped_column(DateTime)

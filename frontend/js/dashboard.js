@@ -17,6 +17,22 @@ function weekTrack(sessions, currentWeek) {
     .join("");
 }
 
+// Zeigt die Einheiten DIESER Woche als Punkte - unabhängig vom Kalendertag,
+// da an einem Tag auch mehrere Einheiten absolviert werden können.
+function weekDots(sessions, currentWeek, nextSessionId) {
+  const weekSessions = sessions
+    .filter((s) => s.week_number === currentWeek)
+    .sort((a, b) => a.day_number - b.day_number);
+  return weekSessions
+    .map((s) => {
+      let cls = "is-pending";
+      if (s.completed) cls = "is-done";
+      else if (s.id === nextSessionId) cls = "is-next";
+      return `<span class="week-dot ${cls}" title="Einheit ${s.day_number}: ${s.session_type}"></span>`;
+    })
+    .join("");
+}
+
 async function nutritionStripHtml() {
   try {
     const targets = await api.getNutritionTargets();
@@ -67,11 +83,13 @@ export async function renderDashboard(root, navigate) {
       0
     ) / 60
   );
+  const weekSessionCount = sessions.filter((s) => s.week_number === next.week_number).length;
 
   root.innerHTML = `
     <div class="hero-card">
-      <p class="eyebrow">Woche ${String(next.week_number).padStart(2, "0")} · Tag ${next.day_number} · ${active.name}</p>
+      <p class="eyebrow">Woche ${String(next.week_number).padStart(2, "0")} von ${active.duration_weeks} · ${active.name}</p>
       <h2>${next.session_type}</h2>
+      <p class="hero-subline">Einheit ${next.day_number} von ${weekSessionCount} diese Woche</p>
       <div class="hero-meta">
         <div>
           <div class="stat-value mono-num">${exerciseCount}</div>
@@ -83,6 +101,7 @@ export async function renderDashboard(root, navigate) {
         </div>
       </div>
       <button class="btn btn-primary" id="start-btn">Einheit starten</button>
+      <div class="week-dots">${weekDots(sessions, next.week_number, next.id)}</div>
       <div class="week-track">${weekTrack(sessions, next.week_number)}</div>
     </div>
 

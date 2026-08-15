@@ -83,6 +83,21 @@ export async function renderOnboarding(root, navigate, opts = {}) {
           </div>
         </div>
 
+        <div class="form-field">
+          <label>Zeit pro Einheit</label>
+          <div class="segmented" id="f-minutes">
+            ${[10, 15, 20, 25, 30]
+              .map(
+                (m) => `
+              <button type="button" class="segmented-option ${m === 20 ? "is-active" : ""}" data-value="${m}">
+                <span>${m}</span>
+                <small>min</small>
+              </button>`
+              )
+              .join("")}
+          </div>
+        </div>
+
         <div class="form-row">
           <div class="form-field">
             <label for="f-weeks">Dauer</label>
@@ -108,7 +123,16 @@ export async function renderOnboarding(root, navigate, opts = {}) {
 
   let focus = "mixed";
   let level = "beginner";
+  let sessionMinutes = 20;
   const selectedEquipment = new Set();
+
+  root.querySelectorAll("#f-minutes .segmented-option").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      sessionMinutes = Number(btn.dataset.value);
+      root.querySelectorAll("#f-minutes .segmented-option").forEach((b) => b.classList.remove("is-active"));
+      btn.classList.add("is-active");
+    });
+  });
 
   root.querySelectorAll("#f-focus .segmented-option").forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -154,6 +178,7 @@ export async function renderOnboarding(root, navigate, opts = {}) {
         focus,
         fitness_level: level,
         equipment: [...selectedEquipment],
+        session_minutes: sessionMinutes,
         duration_weeks: Number(root.querySelector("#f-weeks").value),
         days_per_week: Number(root.querySelector("#f-days").value),
       });

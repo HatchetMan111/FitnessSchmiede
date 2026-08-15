@@ -55,7 +55,35 @@
 
 .hero-card h2 {
   font-size: 26px;
-  margin: var(--space-2) 0 var(--space-3);
+  margin: var(--space-2) 0 4px;
+}
+
+.hero-subline {
+  font-size: 13px;
+  color: var(--text-dim);
+  margin: 0 0 var(--space-3);
+}
+
+.week-dots {
+  display: flex;
+  gap: 8px;
+  margin-top: var(--space-3);
+}
+
+.week-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--border-strong);
+}
+
+.week-dot.is-done {
+  background: var(--forged);
+}
+
+.week-dot.is-next {
+  background: var(--ember);
+  box-shadow: 0 0 0 3px var(--ember-dim);
 }
 
 .hero-meta {

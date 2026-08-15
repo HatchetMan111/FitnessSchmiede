@@ -48,6 +48,7 @@ class ProgramCreate(BaseModel):
     focus: str  # "bodyweight" | "equipment" | "mixed"
     equipment: list[str] = []
     fitness_level: str = "intermediate"  # "beginner" | "intermediate" | "advanced"
+    session_minutes: int = 20  # 10-30, wird serverseitig geclamped
     duration_weeks: int = 8
     days_per_week: int = 3
 
@@ -60,6 +61,7 @@ class ProgramOut(BaseModel):
     goal: str
     focus: str
     fitness_level: str
+    session_minutes: int
     duration_weeks: int
     days_per_week: int
     start_date: datetime

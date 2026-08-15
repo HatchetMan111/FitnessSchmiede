@@ -71,6 +71,7 @@ def _ensure_columns():
     migrations = {
         "equipment": "ALTER TABLE programs ADD COLUMN equipment TEXT DEFAULT '[]'",
         "fitness_level": "ALTER TABLE programs ADD COLUMN fitness_level TEXT DEFAULT 'intermediate'",
+        "session_minutes": "ALTER TABLE programs ADD COLUMN session_minutes INTEGER DEFAULT 20",
     }
     with engine.begin() as conn:
         for column, statement in migrations.items():

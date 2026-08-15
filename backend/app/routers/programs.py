@@ -37,6 +37,7 @@ def create_program(payload: ProgramCreate, db: Session = Depends(get_db)):
         focus=payload.focus,
         equipment=payload.equipment,
         fitness_level=payload.fitness_level,
+        session_minutes=payload.session_minutes,
         duration_weeks=payload.duration_weeks,
         days_per_week=payload.days_per_week,
     )

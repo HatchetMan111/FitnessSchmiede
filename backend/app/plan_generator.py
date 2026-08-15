@@ -79,7 +79,7 @@ EQUIPMENT_GROUPS = {
 LEVEL_CONFIG = {
     "beginner": {
         "label": "Einsteiger",
-        "exercises_per_session": 4,
+        "circuit_size": 4,
         "time_work": (15, 28),
         "time_rest": (35, 28),
         "time_sets": 2,
@@ -90,7 +90,7 @@ LEVEL_CONFIG = {
     },
     "intermediate": {
         "label": "Fortgeschritten",
-        "exercises_per_session": 6,
+        "circuit_size": 5,
         "time_work": (30, 50),
         "time_rest": (25, 20),
         "time_sets": 3,
@@ -101,7 +101,7 @@ LEVEL_CONFIG = {
     },
     "advanced": {
         "label": "Erfahren",
-        "exercises_per_session": 7,
+        "circuit_size": 6,
         "time_work": (40, 65),
         "time_rest": (20, 12),
         "time_sets": 3,
@@ -111,6 +111,12 @@ LEVEL_CONFIG = {
         "progression_pace": 1.2,  # nutzt die Spanne schneller aus
     },
 }
+
+MIN_EXERCISES_PER_SESSION = 3
+MAX_EXERCISES_PER_SESSION = 8
+MIN_ROUNDS = 1
+MAX_ROUNDS = 8
+ASSUMED_SECONDS_PER_REP_SET = 30  # Wiederholungen selbst sind nicht getimt, grobe Annahme für die Zeitschätzung
 
 DELOAD_EVERY_N_WEEKS = 4
 
@@ -122,6 +128,33 @@ def _resolve_equipment_values(equipment_groups: list[str]) -> list[str]:
         if group:
             values.extend(group["values"])
     return values
+
+
+def _plan_session_size(style: str, level: str, session_minutes: int) -> tuple[int, int | None]:
+    """Übersetzt das Zeitbudget in Übungsanzahl + ggf. Rundenzahl.
+
+    Zeit-Stil (HIIT): Übungsvielfalt bleibt fix je Level (echtes Zirkel-
+    Gefühl), das Zeitbudget steuert stattdessen die Rundenzahl (1-5 Umläufe).
+    Reps-Stil (Kraft): Sätze/Pause bleiben exakt wie vom Level vorgegeben -
+    Erholung wird nie zugunsten der Zeit gekürzt. Stattdessen bestimmt das
+    Budget, wie viele verschiedene Übungen reinpassen.
+
+    Rückgabe: (Übungsanzahl, Runden). Runden ist None bei Reps-Stil, dort
+    kommt die Satzzahl unverändert aus LEVEL_CONFIG.
+    """
+    cfg = LEVEL_CONFIG[level]
+
+    if style == "time":
+        exercises = cfg["circuit_size"]
+        w0, w1 = cfg["time_work"]
+        r0, r1 = cfg["time_rest"]
+        round_seconds = exercises * (5 + (w0 + w1) / 2 + (r0 + r1) / 2)
+        rounds = round((session_minutes * 60) / round_seconds)
+        return exercises, max(MIN_ROUNDS, min(MAX_ROUNDS, rounds))
+
+    seconds_per_exercise = cfg["reps_sets"][1] * (ASSUMED_SECONDS_PER_REP_SET + cfg["reps_rest"])
+    exercises = round((session_minutes * 60) / seconds_per_exercise)
+    return max(MIN_EXERCISES_PER_SESSION, min(MAX_EXERCISES_PER_SESSION, exercises)), None
 
 
 def _day_offsets(days_per_week: int) -> list[int]:
@@ -194,6 +227,7 @@ def generate_program(
     days_per_week: int,
     equipment: list[str] | None = None,
     fitness_level: str = "intermediate",
+    session_minutes: int = 20,
     start_date: datetime | None = None,
 ) -> Program:
     if focus not in SESSION_TEMPLATES:
@@ -203,7 +237,7 @@ def generate_program(
 
     equipment = equipment or []
     allowed_equipment = _resolve_equipment_values(equipment)
-    exercises_per_session = LEVEL_CONFIG[fitness_level]["exercises_per_session"]
+    session_minutes = max(10, min(30, session_minutes))
 
     start_date = start_date or datetime.utcnow()
     templates = SESSION_TEMPLATES[focus]
@@ -215,6 +249,7 @@ def generate_program(
         focus=focus,
         equipment=json.dumps(equipment, ensure_ascii=False),
         fitness_level=fitness_level,
+        session_minutes=session_minutes,
         duration_weeks=duration_weeks,
         days_per_week=days_per_week,
         start_date=start_date,
@@ -229,6 +264,7 @@ def generate_program(
 
         for day in range(1, days_per_week + 1):
             session_type, categories, style = templates[(day - 1) % len(templates)]
+            exercises_per_session, rounds = _plan_session_size(style, fitness_level, session_minutes)
 
             session = ProgramSession(
                 program_id=program.id,
@@ -247,7 +283,7 @@ def generate_program(
 
             for idx, exercise in enumerate(exercises):
                 sets, reps, duration_seconds, rest_seconds = _dose(
-                    style, progress_factor, is_deload, fitness_level
+                    style, progress_factor, is_deload, fitness_level, rounds_override=rounds
                 )
                 db.add(
                     SessionExercise(
@@ -266,10 +302,11 @@ def generate_program(
     return program
 
 
-def _dose(style: str, progress_factor: float, is_deload: bool, fitness_level: str):
+def _dose(style: str, progress_factor: float, is_deload: bool, fitness_level: str, rounds_override: int | None = None):
     """Berechnet Sätze/Wiederholungen bzw. Arbeits-/Pausenzeiten für die
     gegebene Trainingswoche, skaliert auf den Start-/Zielbereich des
-    Fitness-Levels. Deload-Wochen reduzieren das Volumen zusätzlich um ~30%."""
+    Fitness-Levels. Deload-Wochen reduzieren das Volumen zusätzlich um ~30%.
+    rounds_override kommt aus dem Zeitbudget (nur bei style="time" relevant)."""
     cfg = LEVEL_CONFIG[fitness_level]
     factor = min(progress_factor * cfg["progression_pace"], 1.0)
     deload_mult = 0.7 if is_deload else 1.0
@@ -279,7 +316,8 @@ def _dose(style: str, progress_factor: float, is_deload: bool, fitness_level: st
         r0, r1 = cfg["time_rest"]
         work_seconds = round((w0 + (w1 - w0) * factor) * deload_mult)
         rest_seconds = round(r0 + (r1 - r0) * factor)
-        return cfg["time_sets"], None, work_seconds, rest_seconds
+        sets = rounds_override if rounds_override is not None else cfg["time_sets"]
+        return sets, None, work_seconds, rest_seconds
 
     # style == "reps"
     reps0, reps1 = cfg["reps"]
