@@ -152,7 +152,7 @@ After=network.target
 Type=simple
 Environment=DB_PATH=/opt/fitnessschmiede/data/fitnessschmiede.db
 Environment=DATASET_DIR=/opt/fitnessschmiede/data/exercises-dataset
-Environment=FRONTEND_DIST=/opt/fitnessschmiede/app/frontend
+Environment=FRONTEND_DIST=/opt/fitnessschmiede/app/frontend/dist
 WorkingDirectory=/opt/fitnessschmiede/app/backend
 ExecStart=/opt/fitnessschmiede/venv/bin/uvicorn app.main:app --host 0.0.0.0 --port ${APP_PORT}
 Restart=on-failure

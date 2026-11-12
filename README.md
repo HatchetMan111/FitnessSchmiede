@@ -30,7 +30,9 @@ UPDATE=1 bash -c "$(curl -fsSL https://raw.githubusercontent.com/HatchetMan111/F
 ## Architektur
 
 - **Backend:** Python + FastAPI, SQLite (eine Datei, kein separater DB-Prozess)
-- **Frontend:** PWA aus reinem HTML/CSS/JS, kein Build-Schritt nötig - lässt
+- **Frontend:** React + Vite (PWA). Das Build-Ergebnis liegt unter
+  `frontend/dist` und wird **mitcommitted** - der Container braucht dafür
+  kein Node, das Backend liefert die statischen Dateien direkt aus. Lässt
   sich auf dem Smartphone-Homescreen installieren. **Bekannte Einschränkung:**
   Service Worker (Offline-Cache) und Wake Lock (Bildschirm bleibt an) laufen
   nur in einem "Secure Context" (HTTPS oder `localhost`). Da die App bewusst
@@ -49,6 +51,8 @@ Ausführliche Architektur- und Entscheidungs-Dokumentation: [`docs/technical-pla
 
 ## Lokale Entwicklung (ohne Proxmox)
 
+**Backend:**
+
 ```bash
 cd backend
 python3 -m venv .venv && source .venv/bin/activate
@@ -62,16 +66,28 @@ DB_PATH=./data/fitnessschmiede.db \
 
 DB_PATH=./data/fitnessschmiede.db \
 DATASET_DIR=../dataset \
-FRONTEND_DIST=../frontend \
+FRONTEND_DIST=../frontend/dist \
   uvicorn app.main:app --reload --port 8080
 ```
 
-Danach `http://localhost:8080` öffnen.
+**Frontend (React/Vite):**
+
+```bash
+cd frontend
+npm install
+npm run dev        # Dev-Server auf :5173, leitet /api und /media an :8080 weiter
+npm run build      # baut frontend/dist - nach einem Build committen!
+```
+
+Für die Entwicklung genügt `npm run dev` (das Backend läuft parallel auf
+:8080). Der geänderte `dist`-Build gehört mit ins Commit, damit der LXC
+aktuell bleibt, ohne Node zu brauchen.
 
 ## Ersten Trainingsplan anlegen
 
-Aktuell per API (eine Einstellungsseite dafür ist der nächste Ausbauschritt,
-siehe `docs/technical-plan.md`):
+Direkt in der App: Auf dem Dashboard „Programm erstellen“ - der Assistent
+fragt Ziel, Fitness-Stand, Fokus, verfügbare Geräte und Zeitbudget ab und
+generiert den Plan. Alternativ per API:
 
 ```bash
 curl -X POST http://localhost:8080/api/programs \

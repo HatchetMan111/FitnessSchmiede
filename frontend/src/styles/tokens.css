@@ -23,6 +23,7 @@
   --ember: #e8623a;
   --ember-glow: #ff8552;
   --ember-dim: rgba(232, 98, 58, 0.16);
+  --ember-strong: rgba(232, 98, 58, 0.55);
 
   --steel: #7a8b99;
   --steel-light: #a8b8c4;
@@ -51,7 +52,11 @@
   --radius: 14px;
   --radius-sm: 8px;
 
+  --shadow-card: 0 4px 18px rgba(0, 0, 0, 0.25);
+  --shadow-glow: 0 4px 24px rgba(232, 98, 58, 0.22);
+
   --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-top: env(safe-area-inset-top, 0px);
 }
 
 * {

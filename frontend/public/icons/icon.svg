@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <rect width="100" height="100" rx="20" fill="#1a1613"/>
+  <!-- Amboss, vereinfacht -->
+  <path d="M20 62 L80 62 L74 70 L26 70 Z" fill="#e8623a"/>
+  <rect x="44" y="70" width="12" height="14" fill="#e8623a"/>
+  <rect x="36" y="84" width="28" height="6" rx="2" fill="#e8623a"/>
+  <path d="M30 62 L30 50 Q30 44 38 44 L62 44 Q70 44 70 50 L70 62 Z" fill="#f0e9de"/>
+  <!-- Funke -->
+  <circle cx="72" cy="34" r="3" fill="#ff8552"/>
+  <circle cx="80" cy="42" r="2" fill="#ff8552"/>
+  <circle cx="66" cy="26" r="2" fill="#ff8552"/>
+</svg>
