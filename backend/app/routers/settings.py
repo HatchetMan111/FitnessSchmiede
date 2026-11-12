@@ -1,3 +1,5 @@
+from types import SimpleNamespace
+
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from sqlalchemy.orm import Session
 
@@ -54,15 +56,32 @@ async def trigger_translation(background_tasks: BackgroundTasks, db: Session = D
             400, "Kein Standard-KI-Anbieter hinterlegt - bitte zuerst unter Einstellungen anlegen."
         )
 
+    # Provider-Felder als plain dict einfrieren: das ORM-Objekt gehört zur
+    # Request-Session, die nach Antwortende geschlossen wird - der Hintergrund-
+    # Job hätte sonst mit einer detached Instanz zu tun.
+    provider_config = {
+        "provider_type": provider.provider_type,
+        "base_url": provider.base_url,
+        "api_key": provider.api_key,
+        "default_model": provider.default_model,
+    }
+
     async def _run():
         job_db = SessionLocal()
+        provider_ns = SimpleNamespace(**provider_config)
         try:
             remaining = count_untranslated(job_db)
             while remaining > 0:
-                translated = await translate_all_exercises(job_db, provider, batch_size=20)
+                translated = await translate_all_exercises(job_db, provider_ns, batch_size=20)
                 if translated == 0:
                     break
                 remaining = count_untranslated(job_db)
+        except Exception:
+            # Netzwerk-/API-Fehler dürfen den Thread nicht unbemerkt abwürgen -
+            # der Frontend-Poll erkennt den Stillstand (untranslated bleibt konstant).
+            import logging
+
+            logging.getLogger("uvicorn.error").exception("Übersetzungs-Job fehlgeschlagen")
         finally:
             job_db.close()
 

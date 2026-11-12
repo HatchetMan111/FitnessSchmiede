@@ -25,6 +25,14 @@ def complete_session(session_id: int, db: Session = Depends(get_db)):
         raise HTTPException(404, "Einheit nicht gefunden")
     session.completed = True
     session.completed_at = datetime.utcnow()
+
+    # War das die letzte offene Einheit des Programms, wird das Programm
+    # abgeschlossen - das Dashboard zeigt sonst weiter "Woche X" an, obwohl
+    # nichts mehr offen ist.
+    program = session.program
+    if program and all(s.completed for s in program.sessions):
+        program.status = "completed"
+
     db.commit()
     return {"status": "ok"}
 

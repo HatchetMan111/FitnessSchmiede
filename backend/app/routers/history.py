@@ -15,7 +15,10 @@ def _current_streak(sessions: list[ProgramSession]) -> int:
     passt damit auch zu über die Woche verteilten Trainingstagen, statt
     Kalendertage vorauszusetzen."""
     now = datetime.utcnow()
-    past_due = [s for s in sessions if s.planned_date and s.planned_date <= now]
+    past_due = sorted(
+        (s for s in sessions if s.planned_date and s.planned_date <= now),
+        key=lambda s: s.planned_date,
+    )
     streak = 0
     for s in reversed(past_due):
         if s.completed:

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -29,7 +29,10 @@ def list_exercises(
 
 @router.get("/{exercise_id}", response_model=ExerciseOut)
 def get_exercise(exercise_id: str, db: Session = Depends(get_db)):
-    return db.get(Exercise, exercise_id)
+    exercise = db.get(Exercise, exercise_id)
+    if not exercise:
+        raise HTTPException(404, "Übung nicht gefunden")
+    return exercise
 
 
 @router.get("/meta/categories")

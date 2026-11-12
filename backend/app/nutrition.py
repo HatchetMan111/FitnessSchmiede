@@ -61,9 +61,11 @@ def bmr(weight_kg: float, height_cm: float, age: int, sex: str) -> float:
 def calculate_targets(profile, goal: str) -> dict:
     category = GOAL_CATEGORY.get(goal, "fitness")
 
-    tdee = bmr(profile.weight_kg, profile.height_cm, profile.age, profile.sex) * ACTIVITY_MULTIPLIERS[
-        profile.activity_level
-    ]
+    # .get-Fallback: ein in alten Versionen gesetzter unbekannter Wert darf
+    # die Ausgabe nicht mit einem KeyError (HTTP 500) abschießen.
+    tdee = bmr(profile.weight_kg, profile.height_cm, profile.age, profile.sex) * ACTIVITY_MULTIPLIERS.get(
+        profile.activity_level, 1.55
+    )
     calories = round(tdee + CALORIE_ADJUSTMENT[category])
 
     protein_g = round(PROTEIN_PER_KG[category] * profile.weight_kg)
